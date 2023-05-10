@@ -16,7 +16,9 @@ export const createGOB = (session: string, token: string) => {
 				? `&webpro[min_salary]=${salary[0]}&webpro[max_salary]=${salary[1]}`
 				: ''
 			}`
-		console.log(finalUrl, token, session)
+
+		if (process.env.DEBUG) console.log(finalUrl, token, session)
+
 		const res = await fetch(finalUrl, {
 			headers: {
 				'X-CSRF-Token': token,
