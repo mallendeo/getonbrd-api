@@ -1,0 +1,24 @@
+version: "2"
+
+networks:
+  caddy:
+    name: caddy_dev
+    external: true
+
+services:
+  getonbrd-api:
+    build: "."
+    user: "node"
+    container_name: getonbrd-api
+    working_dir: /home/node/app
+    networks:
+      - caddy
+    env_file:
+      - .dev.vars
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./:/home/node/app
+    expose:
+      - 8787
+    command: "npm start -- --local"

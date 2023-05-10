@@ -1,0 +1,10 @@
+.vscode
+**/node_modules
+.DS_Store
+
+# Env variables are passed through the compose file
+.dev.vars
+
+# Docker
+compose.yml
+Dockerfile
