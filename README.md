@@ -8,3 +8,11 @@
 
 - `wrangler secret put GOB_SESSION`
 - `wrangler secret put GOB_CSRF_TOKEN`
+
+## Public API
+
+https://getonbrd-api.chilesh.workers.dev
+
+e.g
+
+https://getonbrd-api.chilesh.workers.dev/filter?salary=2000-3200&offset=0
