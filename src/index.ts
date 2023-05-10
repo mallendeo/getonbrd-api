@@ -1,6 +1,7 @@
 import { RouteContext, WorkerRouter } from '@worker-tools/router'
 import { JSONResponse, ok, unprocessableEntity } from '@worker-tools/shed'
 import { createGOB } from './scraper'
+import yn from 'yn'
 
 const initWithCtx = (ctx: RouteContext) => {
 	const gob = createGOB(ctx.env.GOB_SESSION, ctx.env.GOB_CSRF_TOKEN)
@@ -19,9 +20,10 @@ router.get('/filter', async (req, ctx) => {
 	const salaryRange: number[] | null = salaryParam
 		? salaryParam.split(/[,:-]/g).map(Number)
 		: null
+	const remote = yn(params.get('remote'))
 
 	const { gob } = initWithCtx(ctx)
-	const { jobs, meta } = await gob.navJobs(salaryRange, offsetParam)
+	const { jobs, meta } = await gob.navJobs(salaryRange, offsetParam, remote)
 
 	return new JSONResponse({ jobs, meta }, ok())
 })
