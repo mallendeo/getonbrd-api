@@ -10,24 +10,27 @@ export const createGOB = (session: string, token: string) => {
 		offset = 0,
 		remote = false,
 	): Promise<{ jobs: Job[]; meta: JobSearchMeta }> => {
-		const BASE_URL = `https://www.getonbrd.com/webpros/search_jobs.json?offset=${offset}`
-		const finalUrl = `${BASE_URL}&webpro[remote_jobs]=${remote ? 'true' : 'false'
-			}${salary
-				? `&webpro[min_salary]=${salary[0]}&webpro[max_salary]=${salary[1]}`
-				: ''
-			}`
+		const params = {
+			offset,
+			webpro: {
+				remote_jobs: remote ? 'true' : 'false',
+				min_salary: salary ? salary[0] : null,
+				max_salary: salary ? salary[1] : null,
+			},
+		}
 
-		if (process.env.DEBUG) console.log(finalUrl, token, session)
+		const BASE_URL = `https://www.getonbrd.com/webpros/search_jobs.json`
 
-		const res = await fetch(finalUrl, {
+		console.log('finalUrl', BASE_URL)
+		if (process.env.DEBUG) console.log(BASE_URL, params, token, session)
+
+		const res = await fetch(BASE_URL, {
 			headers: {
-				'X-CSRF-Token': token,
-				'Content-Type': 'application/x-www-form-urlencoded',
-				'X-Requested-With': 'XMLHttpRequest',
-				'Accept-Language': 'es-US,es;q=0.9,es-419;q=0.8,en;q=0.7',
+				'Content-Type': 'application/json',
 				Cookie: `_getonboard_session=${session};`,
 			},
 			method: 'POST',
+			body: JSON.stringify(params)
 		})
 
 		return res.json()
