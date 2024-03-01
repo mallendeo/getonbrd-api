@@ -1,18 +1,15 @@
 # Development
 
-- Create a `.dev.vars` file
-- Set `GOB_SESSION` and `GOB_CSRF_TOKEN` vars on that file
-- `npm start -- --local`
+- Create a `.env` file
+- Set `GOB_SESSION` variable on that file
+- `bun dev`
 
 ## Production
 
-- `wrangler secret put GOB_SESSION`
-- `wrangler secret put GOB_CSRF_TOKEN`
+- `bun start`
 
 ## Public API
 
-https://getonbrd-api.chilesh.workers.dev
+Example:
 
-e.g
-
-https://getonbrd-api.chilesh.workers.dev/filter?salary=2000-3200&offset=0
+https://apihost.example/filter?salary=2000-3200&offset=0
