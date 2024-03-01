@@ -1,54 +1,59 @@
-import { RouteContext, WorkerRouter } from '@worker-tools/router'
-import { JSONResponse, ok, unprocessableEntity } from '@worker-tools/shed'
-import { createGOB } from './scraper'
+import process from 'node:process'
 import yn from 'yn'
+import { createGOB } from './scraper'
 
-const initWithCtx = (ctx: RouteContext) => {
-	const gob = createGOB(ctx.env.GOB_SESSION, ctx.env.GOB_CSRF_TOKEN)
-	return {
-		gob,
-		env: ctx.env,
-	}
+const initWithCtx = (env: NodeJS.ProcessEnv) => {
+  const gob = createGOB(env.GOB_SESSION!, env.GOB_CSRF_TOKEN!)
+  return {
+    gob,
+    env,
+  }
 }
 
-export const router = new WorkerRouter()
+const PORT = process.env.PORT || 8787
 
-router.get('/filter', async (req, ctx) => {
-	const params = new URL(req.url).searchParams
-	const salaryParam = (params.get('salary') as string) || ''
-	const offsetParam: number = +(params.get('offset') ?? 0)
-	const salaryRange: number[] | null = salaryParam
-		? salaryParam.split(/[,:-]/g).map(Number)
-		: null
-	const remote = yn(params.get('remote'))
+Bun.serve({
+  port: PORT,
+  fetch: async (req) => {
+    const url = new URL(req.url)
+    const params = url.searchParams
+    const { pathname } = url
 
-	const { gob } = initWithCtx(ctx)
-	const { jobs, meta } = await gob.navJobs(salaryRange, offsetParam, remote)
+    const { gob, env } = initWithCtx(process.env)
 
-	return new JSONResponse({ jobs, meta }, ok())
+    if (pathname === '/filter') {
+      const salaryParam = (params.get('salary') as string) || ''
+      const offsetParam = +(params.get('offset') ?? 0)
+
+      const salaryRange: number[] | null = salaryParam
+        ? salaryParam.split(/[,:-]/g).map(Number)
+        : null
+      const remote = yn(params.get('remote'))
+
+      const { jobs, meta } = await gob.navJobs(salaryRange, offsetParam, remote)
+      return new Response(JSON.stringify({ jobs, meta }))
+    }
+
+    if (pathname.startsWith('/jobs/')) {
+      const slug = pathname.split('/')[2]
+      if (!slug) {
+        return new Response(JSON.stringify({ error: 'Wrong format' }), {
+          status: 422,
+        })
+      }
+      const jobInfo = await gob.getJob(slug)
+      return new Response(JSON.stringify(jobInfo))
+    }
+
+    if (pathname.startsWith('/jobs-')) {
+      const term = pathname.split('-')[1]
+      const jobs = await gob.search(term)
+      return new Response(JSON.stringify({ jobs }))
+    }
+
+    // default response
+    return new Response('Route not found', { status: 404 })
+  },
 })
 
-router.get('/jobs/*', async (req, ctx) => {
-	const path = new URL(req.url).pathname
-	const [, slug] = path.match(/^(?:\/jobs\/)?(.+)/)
-	if (!slug) {
-		return new JSONResponse({ error: 'Wrong format' }, unprocessableEntity())
-	}
-
-	const { gob } = initWithCtx(ctx)
-	const jobInfo = await gob.getJob(slug)
-
-	return new JSONResponse(jobInfo, ok())
-})
-
-router.get('/jobs-*', async (req, ctx) => {
-	const path = new URL(req.url).pathname
-	const term = path.match(/jobs-(.+)/)[1]
-
-	const { gob } = initWithCtx(ctx)
-	const jobs = await gob.search(term)
-
-	return new JSONResponse({ jobs }, ok())
-})
-
-export default router
+console.log(`Server listening on :${PORT}`)
